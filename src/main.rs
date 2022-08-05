@@ -37,8 +37,6 @@ fn main() {
 /// `i`は`c`が原点を中心とする半径2の円から出るまでにかかった繰り返し回数となる。
 /// `c`がマンデルブロ集合に含まれているらしい場合(正確にいうと、繰り返し回数の上限に達しても
 /// `c`がマンデルブロ集合に含まれないことを示せなかった場合)、`None`を返す
-
-
 fn escape_time(c: Complex<f64>, limit: usize) -> Option<usize> {
     let mut z = Complex { re: 0.0, im: 0.0 };
     for i in 0..limit {
@@ -55,10 +53,15 @@ fn escape_time(c: Complex<f64>, limit: usize) -> Option<usize> {
 /// Specifically, `s` should have the form <left><sep><right>, where <sep> is
 /// the character given by the `separator` argument, and <left> and <right> are both
 /// strings that can be parsed by `T::form_str`.
-/// `separator` must be an ASCII charactor.
-
+/// `separator` must be an ASCII character.
+///
+/// `s`は\<left\>\<sep\>\<right\>の形でなければならない。
+/// \<sep\>は`separator`引数で与えられる文字である。
+/// \<left\>と\<right\>は双方とも`T::from_str`でパースできる文字列`separator`はASCII文字でなければならない
+///
 /// If `s` has the proper form, return `Some<(x, y)>`. If it doesn't parse correctly, return `None`.
-
+///
+/// `ｓ`が適切な形であれば`Some(<x, y>)`を返す。パースできなければ`None`を返す
 fn parse_pair<T:FromStr>(s: &str, separator: char) -> Option<(T, T)> {
     match s.find(separator) {
         None => None,
@@ -72,6 +75,8 @@ fn parse_pair<T:FromStr>(s: &str, separator: char) -> Option<(T, T)> {
 }
 
 /// Parse a pair of floating-point numbers separated by a comma as a complex number.
+///
+/// カンマで区切られた浮動小数点数のペアをパースして複素数を返す。
 fn parse_complex(s: &str) -> Option<Complex<f64>> {
     match parse_pair(s, ',') {
         Some((re, im)) => Some(Complex { re, im }),
@@ -79,6 +84,17 @@ fn parse_complex(s: &str) -> Option<Complex<f64>> {
     }
 }
 
+/// Given the row and column of a pixel in the output image,
+/// return the corresponding point on the complex plane.
+///
+/// `bounds` is a pair giving the width and height of the image in pixels.
+/// `pixel` is a (column, row) pair indicating a particular pixel in that image.
+/// The `upper_left` and `lower_right` parameters are points on the complex
+/// plane designating the area our image covers
+///
+/// `bounds`は出力画像の幅と高さをピクセル単位で与える。
+/// `pixel`は画像上の特定のピクセルを(行、列)ペアの形で指定する。
+/// 仮引数`upper_left`、`lower_right`は、出力画像に描画する複素平面を左上と右下で指定する
 fn pixel_to_point(bounds: (usize, usize), pixel: (usize, usize), upper_left: Complex<f64>, lower_right: Complex<f64>) -> Complex<f64> {
     let (width, height) = (lower_right.re - upper_left.re, upper_left.im - lower_right.im);
 
@@ -89,7 +105,7 @@ fn pixel_to_point(bounds: (usize, usize), pixel: (usize, usize), upper_left: Com
 }
 
 fn render(pixels: &mut [u8], bounds: (usize, usize), upper_left: Complex<f64>, lower_right: Complex<f64>) {
-    assert!(pixels.len() == bounds.0 * bounds.1);
+    assert_eq!(pixels.len(), bounds.0 * bounds.1);
 
     for row in 0..bounds.1 {
         for column in 0..bounds.0 {
